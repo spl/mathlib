@@ -93,6 +93,8 @@ induction_on₂ s₁ s₂ $ λ l₁ l₂, induction_on s₃ $ λ l₃, H l₁ l�
 @[simp] theorem ext_iff {s t : finmap β} : s.entries = t.entries ↔ s = t :=
 ⟨ext, congr_arg _⟩
 
+/- mem -/
+
 /-- The predicate `a ∈ s` means that `s` has a value associated to the key `a`. -/
 instance : has_mem α (finmap β) := ⟨λ a s, a ∈ s.entries.keys⟩
 
@@ -101,6 +103,8 @@ theorem mem_def {a : α} {s : finmap β} :
 
 @[simp] theorem mem_to_finmap {a : α} {s : alist β} :
   a ∈ ⟦s⟧ ↔ a ∈ s := iff.rfl
+
+/- keys -/
 
 /-- The set of keys of a finite map. -/
 def keys (s : finmap β) : finset α :=
@@ -112,8 +116,10 @@ def keys (s : finmap β) : finset α :=
   keys ⟦s₁⟧ = keys ⟦s₂⟧ ↔ s₁.keys ~ s₂.keys :=
 by simp [keys, alist.keys]
 
-theorem mem_keys {a : α} {s : finmap β} : a ∈ s.keys ↔ a ∈ s :=
+@[simp] theorem mem_keys {a : α} {s : finmap β} : a ∈ s.keys ↔ a ∈ s :=
 induction_on s $ λ s, alist.mem_keys
+
+/- empty -/
 
 /-- The empty map. -/
 instance : has_emptyc (finmap β) := ⟨⟨0, nodupkeys_nil⟩⟩
@@ -126,6 +132,8 @@ multiset.not_mem_zero a
 
 @[simp] theorem keys_empty : (∅ : finmap β).keys = ∅ := rfl
 
+/- singleton -/
+
 /-- The singleton map. -/
 def singleton (a : α) (b : β a) : finmap β :=
 ⟨⟨a, b⟩::0, nodupkeys_singleton _⟩
@@ -137,6 +145,8 @@ variables [decidable_eq α]
 
 instance has_decidable_eq [∀ a, decidable_eq (β a)] : decidable_eq (finmap β)
 | s₁ s₂ := decidable_of_iff _ ext_iff
+
+/- lookup -/
 
 /-- Look up the value associated to a key in a map. -/
 def lookup (a : α) (s : finmap β) : option (β a) :=
@@ -157,6 +167,11 @@ induction_on s $ λ s, alist.lookup_eq_none
 
 instance (a : α) (s : finmap β) : decidable (a ∈ s) :=
 decidable_of_iff _ lookup_is_some
+
+theorem lookup_ext {s₁ s₂ : finmap β} : s₁ = s₂ ↔ ∀ a, lookup a s₁ = lookup a s₂ :=
+induction_on₂ s₁ s₂ $ λ s₁ s₂, to_finmap_eq.trans perm_lookup_ext
+
+/- replace -/
 
 /-- Replace a key with a given value in a finite map.
   If the key is not present it does nothing. -/
@@ -180,6 +195,8 @@ def foldl {δ : Type w} (f : δ → Π a, β a → δ)
   (H : ∀ d a₁ b₁ a₂ b₂, f (f d a₁ b₁) a₂ b₂ = f (f d a₂ b₂) a₁ b₁)
   (d : δ) (m : finmap β) : δ :=
 m.entries.foldl (λ d s, f d s.1 s.2) (λ d s t, H _ _ _ _ _) d
+
+/- erase -/
 
 /-- Erase a key from the map. If the key is not present it does nothing. -/
 def erase (a : α) (s : finmap β) : finmap β :=
@@ -226,6 +243,10 @@ by simp [insert_entries_of_neg (mt mem_to_finmap.1 h)]
 @[simp] theorem mem_insert {a a' : α} {b' : β a'} {s : finmap β} :
   a ∈ insert a' b' s ↔ a = a' ∨ a ∈ s :=
 induction_on s mem_insert
+
+@[simp] theorem keys_insert {a : α} {b : β a} {s : finmap β} :
+  (insert a b s).keys = _root_.insert a s.keys :=
+finset.ext' $ by simp
 
 @[simp] theorem lookup_insert {a} {b : β a} (s : finmap β) :
   lookup a (insert a b s) = some b :=
@@ -278,5 +299,36 @@ induction_on₂ s₁ s₂ $ λ s₁ s₂, mem_lookup_union
 theorem mem_lookup_union_middle {a} {b : β a} {s₁ s₂ s₃ : finmap β} :
   b ∈ lookup a (s₁ ∪ s₃) → a ∉ s₂ → b ∈ lookup a (s₁ ∪ s₂ ∪ s₃) :=
 induction_on₃ s₁ s₂ s₃ $ λ s₁ s₂ s₃, mem_lookup_union_middle
+
+/- disjointkeys -/
+
+/-- Two finite maps have disjoint key sets. -/
+def disjointkeys (s₁ s₂ : finmap β) : Prop :=
+disjoint s₁.keys s₂.keys
+
+theorem disjointkeys_left {s₁ s₂ : finmap β} :
+  disjointkeys s₁ s₂ ↔ ∀ {a}, a ∈ s₁ → a ∉ s₂ :=
+finset.disjoint_left
+
+theorem disjointkeys_right {s₁ s₂ : finmap β} :
+  disjointkeys s₁ s₂ ↔ ∀ {a}, a ∈ s₂ → a ∉ s₁ :=
+finset.disjoint_right
+
+@[simp] theorem disjointkeys_insert_left {a} (b : β a) {s₁ s₂ : finmap β} :
+  disjointkeys (insert a b s₁) s₂ ↔ a ∉ s₂ ∧ disjointkeys s₁ s₂ :=
+by simp [disjointkeys]
+
+@[simp] theorem disjointkeys_insert_right {a} (b : β a) {s₁ s₂ : finmap β} :
+  disjointkeys s₁ (insert a b s₂) ↔ a ∉ s₁ ∧ disjointkeys s₁ s₂ :=
+by simp [disjointkeys]
+
+theorem union_comm {s₁ s₂ : finmap β} (dk : disjointkeys s₁ s₂) :
+  s₁ ∪ s₂ = s₂ ∪ s₁ :=
+lookup_ext.mpr $ λ a,
+  begin
+    by_cases h₁ : a ∈ s₁; by_cases h₂ : a ∈ s₂; simp [h₁, h₂],
+    { have := disjointkeys_left.mp dk h₁, contradiction },
+    { rw ←lookup_eq_none at h₁ h₂, rw [h₁, h₂] }
+  end
 
 end finmap

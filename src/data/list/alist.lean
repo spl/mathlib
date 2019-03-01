@@ -85,6 +85,14 @@ theorem perm_lookup {a : α} {s₁ s₂ : alist β} (p : s₁.entries ~ s₂.ent
   s₁.lookup a = s₂.lookup a :=
 perm_lookup _ s₁.nodupkeys s₂.nodupkeys p
 
+theorem perm_of_eq_lookup {s₁ s₂ : alist β} (h : ∀ a, lookup a s₁ = lookup a s₂) :
+  s₁.entries ~ s₂.entries :=
+perm_of_eq_lookup s₁.nodupkeys s₂.nodupkeys h
+
+theorem perm_lookup_ext {s₁ s₂ : alist β} :
+  s₁.entries ~ s₂.entries ↔ ∀ a, lookup a s₁ = lookup a s₂ :=
+⟨λ p a, perm_lookup p, perm_of_eq_lookup⟩
+
 instance (a : α) (s : alist β) : decidable (a ∈ s) :=
 decidable_of_iff _ lookup_is_some
 

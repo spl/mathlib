@@ -35,6 +35,13 @@ eq.rec_on e (exists.intro b' m)
 theorem mem_keys {a} {l : list (sigma β)} : a ∈ l.keys ↔ ∃ (b : β a), sigma.mk a b ∈ l :=
 ⟨exists_of_mem_keys, λ ⟨b, h⟩, mem_keys_of_mem h⟩
 
+@[simp] theorem mem_keys_nil (a : α) : a ∈ (@nil (sigma β)).keys ↔ false :=
+iff.rfl
+
+@[simp] theorem mem_keys_cons {a s} {l : list (sigma β)} :
+  a ∈ (s :: l).keys ↔ a = s.1 ∨ a ∈ l.keys :=
+iff.rfl
+
 theorem not_mem_keys {a} {l : list (sigma β)} : a ∉ l.keys ↔ ∀ b : β a, sigma.mk a b ∉ l :=
 (not_iff_not_of_iff mem_keys).trans not_exists
 
@@ -160,6 +167,13 @@ theorem mem_lookup_iff {a : α} {b : β a} {l : list (sigma β)} (nd : l.nodupke
 theorem perm_lookup (a : α) {l₁ l₂ : list (sigma β)}
   (nd₁ : l₁.nodupkeys) (nd₂ : l₂.nodupkeys) (p : l₁ ~ l₂) : lookup a l₁ = lookup a l₂ :=
 by ext b; simp [mem_lookup_iff, nd₁, nd₂]; exact mem_of_perm p
+
+theorem perm_of_eq_lookup {l₁ l₂ : list (sigma β)} (nd₁ : l₁.nodupkeys) (nd₂ : l₂.nodupkeys)
+  (h : ∀ a, lookup a l₁ = lookup a l₂) : l₁ ~ l₂ :=
+(perm_ext (nodup_of_nodupkeys nd₁) (nodup_of_nodupkeys nd₂)).mpr $ λ ⟨a, b⟩,
+calc sigma.mk a b ∈ l₁ ↔ b ∈ lookup a l₁   : (mem_lookup_iff nd₁).symm
+                   ... ↔ b ∈ lookup a l₂   : by rw h a
+                   ... ↔ sigma.mk a b ∈ l₂ : mem_lookup_iff nd₂
 
 /- lookup_all -/
 
