@@ -204,6 +204,8 @@ induction_on s $ λ s, by simp
   a' ∈ replace a b s ↔ a' ∈ s :=
 induction_on s $ λ s, by simp
 
+/- foldl -/
+
 /-- Fold a commutative function over the key-value pairs in the map -/
 def foldl {δ : Type w} (f : δ → Π a, β a → δ)
   (H : ∀ d a₁ b₁ a₂ b₂, f (f d a₁ b₁) a₂ b₂ = f (f d a₂ b₂) a₁ b₁)
