@@ -281,7 +281,7 @@ induction_on₂ s₁ s₂ $ λ _ _, mem_union
 @[simp] theorem union_to_finmap (s₁ s₂ : alist β) : ⟦s₁⟧ ∪ ⟦s₂⟧ = ⟦s₁ ∪ s₂⟧ :=
 by simp [(∪), union]
 
-theorem keys_union {s₁ s₂ : finmap β} : (s₁ ∪ s₂).keys = s₁.keys ∪ s₂.keys :=
+@[simp] theorem keys_union {s₁ s₂ : finmap β} : (s₁ ∪ s₂).keys = s₁.keys ∪ s₂.keys :=
 induction_on₂ s₁ s₂ $ λ s₁ s₂, finset.ext' $ by simp [keys]
 
 @[simp] theorem lookup_union_left {a} {s₁ s₂ : finmap β} :
@@ -299,6 +299,10 @@ induction_on₂ s₁ s₂ $ λ s₁ s₂, mem_lookup_union
 theorem mem_lookup_union_middle {a} {b : β a} {s₁ s₂ s₃ : finmap β} :
   b ∈ lookup a (s₁ ∪ s₃) → a ∉ s₂ → b ∈ lookup a (s₁ ∪ s₂ ∪ s₃) :=
 induction_on₃ s₁ s₂ s₃ $ λ s₁ s₂ s₃, mem_lookup_union_middle
+
+theorem union_assoc {s₁ s₂ s₃ : finmap β} : (s₁ ∪ s₂) ∪ s₃ = s₁ ∪ (s₂ ∪ s₃) :=
+lookup_ext.mpr $ λ a,
+by by_cases h₁ : a ∈ s₁; by_cases h₂ : a ∈ s₂; by_cases h₃ : a ∈ s₃; simp [h₁, h₂, h₃]
 
 /- disjointkeys -/
 
@@ -322,13 +326,21 @@ by simp [disjointkeys]
   disjointkeys s₁ (insert a b s₂) ↔ a ∉ s₁ ∧ disjointkeys s₁ s₂ :=
 by simp [disjointkeys]
 
+@[simp] theorem disjointkeys_union_left {s₁ s₂ s₃ : finmap β} :
+  disjointkeys (s₁ ∪ s₂) s₃ ↔ disjointkeys s₁ s₃ ∧ disjointkeys s₂ s₃ :=
+by simp [disjointkeys]
+
+@[simp] theorem disjointkeys_union_right {s₁ s₂ s₃ : finmap β} :
+  disjointkeys s₁ (s₂ ∪ s₃) ↔ disjointkeys s₁ s₂ ∧ disjointkeys s₁ s₃ :=
+by simp [disjointkeys]
+
 theorem union_comm {s₁ s₂ : finmap β} (dk : disjointkeys s₁ s₂) :
   s₁ ∪ s₂ = s₂ ∪ s₁ :=
 lookup_ext.mpr $ λ a,
-  begin
-    by_cases h₁ : a ∈ s₁; by_cases h₂ : a ∈ s₂; simp [h₁, h₂],
-    { have := disjointkeys_left.mp dk h₁, contradiction },
-    { rw ←lookup_eq_none at h₁ h₂, rw [h₁, h₂] }
-  end
+begin
+  by_cases h₁ : a ∈ s₁; by_cases h₂ : a ∈ s₂; simp [h₁, h₂],
+  { have := disjointkeys_left.mp dk h₁, contradiction },
+  { rw ←lookup_eq_none at h₁ h₂, rw [h₁, h₂] }
+end
 
 end finmap
