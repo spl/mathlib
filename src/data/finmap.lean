@@ -146,6 +146,20 @@ variables [decidable_eq α]
 instance has_decidable_eq [∀ a, decidable_eq (β a)] : decidable_eq (finmap β)
 | s₁ s₂ := decidable_of_iff _ ext_iff
 
+/- disjointkeys -/
+
+/-- Two finite maps have disjoint key sets. -/
+def disjointkeys (s₁ s₂ : finmap β) : Prop :=
+disjoint s₁.keys s₂.keys
+
+theorem disjointkeys_left {s₁ s₂ : finmap β} :
+  disjointkeys s₁ s₂ ↔ ∀ {a}, a ∈ s₁ → a ∉ s₂ :=
+finset.disjoint_left
+
+theorem disjointkeys_right {s₁ s₂ : finmap β} :
+  disjointkeys s₁ s₂ ↔ ∀ {a}, a ∈ s₂ → a ∉ s₁ :=
+finset.disjoint_right
+
 /- lookup -/
 
 /-- Look up the value associated to a key in a map. -/
@@ -253,6 +267,14 @@ finset.ext' $ by simp
 induction_on s $ λ s,
 by simp only [insert_to_finmap, lookup_to_finmap, lookup_insert]
 
+@[simp] theorem disjointkeys_insert_left {a} (b : β a) {s₁ s₂ : finmap β} :
+  disjointkeys (insert a b s₁) s₂ ↔ a ∉ s₂ ∧ disjointkeys s₁ s₂ :=
+by simp [disjointkeys]
+
+@[simp] theorem disjointkeys_insert_right {a} (b : β a) {s₁ s₂ : finmap β} :
+  disjointkeys s₁ (insert a b s₂) ↔ a ∉ s₁ ∧ disjointkeys s₁ s₂ :=
+by simp [disjointkeys]
+
 /- extract -/
 
 /-- Erase a key from the map, and return the corresponding value, if found. -/
@@ -303,28 +325,6 @@ induction_on₃ s₁ s₂ s₃ $ λ s₁ s₂ s₃, mem_lookup_union_middle
 theorem union_assoc {s₁ s₂ s₃ : finmap β} : (s₁ ∪ s₂) ∪ s₃ = s₁ ∪ (s₂ ∪ s₃) :=
 lookup_ext.mpr $ λ a,
 by by_cases h₁ : a ∈ s₁; by_cases h₂ : a ∈ s₂; by_cases h₃ : a ∈ s₃; simp [h₁, h₂, h₃]
-
-/- disjointkeys -/
-
-/-- Two finite maps have disjoint key sets. -/
-def disjointkeys (s₁ s₂ : finmap β) : Prop :=
-disjoint s₁.keys s₂.keys
-
-theorem disjointkeys_left {s₁ s₂ : finmap β} :
-  disjointkeys s₁ s₂ ↔ ∀ {a}, a ∈ s₁ → a ∉ s₂ :=
-finset.disjoint_left
-
-theorem disjointkeys_right {s₁ s₂ : finmap β} :
-  disjointkeys s₁ s₂ ↔ ∀ {a}, a ∈ s₂ → a ∉ s₁ :=
-finset.disjoint_right
-
-@[simp] theorem disjointkeys_insert_left {a} (b : β a) {s₁ s₂ : finmap β} :
-  disjointkeys (insert a b s₁) s₂ ↔ a ∉ s₂ ∧ disjointkeys s₁ s₂ :=
-by simp [disjointkeys]
-
-@[simp] theorem disjointkeys_insert_right {a} (b : β a) {s₁ s₂ : finmap β} :
-  disjointkeys s₁ (insert a b s₂) ↔ a ∉ s₁ ∧ disjointkeys s₁ s₂ :=
-by simp [disjointkeys]
 
 @[simp] theorem disjointkeys_union_left {s₁ s₂ s₃ : finmap β} :
   disjointkeys (s₁ ∪ s₂) s₃ ↔ disjointkeys s₁ s₃ ∧ disjointkeys s₂ s₃ :=
